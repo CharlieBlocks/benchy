@@ -1,8 +1,7 @@
 #ifndef _BENCHY_BENCHMARK_CONTEXT_H
 #define _BENCHY_BENCHMARK_CONTEXT_H
 
-#include <chrono>
-
+#include "time.hpp"
 #include "timers.hpp"
 
 
@@ -31,7 +30,7 @@ public:
 
     Warmup iterations help ensure that the instruction cache is hot
     */
-    BenchmarkContext(int iterations, int warmupIterations);
+    BenchmarkContext(unsigned int iterations, unsigned int warmupIterations);
 
 
     /*
@@ -47,12 +46,12 @@ public:
     per-thread CPU timer which counts the number of clock cycles and then divides them
     by the frequency of the CPU. 
     */
-    std::chrono::nanoseconds get_cpu_time();
+    time_span<units::nanoseconds> get_cpu_time();
 
     /*
     Returns the real time duration in nanoseconds.
     */
-    std::chrono::nanoseconds get_real_time();
+    time_span<units::nanoseconds> get_real_time();
 
 
     /*
@@ -63,12 +62,12 @@ public:
 
 private:
     // The current number of warmup iterations and the target number of warmup iterations
-    int m_warmupNum;
-    int m_warmupTarget;
+    unsigned int m_warmupNum;
+    unsigned int m_warmupTarget;
 
     // The current number of iterations and the current number of iterations
-    int m_iterNum;
-    int m_iterTarget;
+    unsigned int m_iterNum;
+    unsigned int m_iterTarget;
 
     // The current state of the benchmark
     // This is updated by the next function

@@ -1,7 +1,7 @@
 #include "benchmark_context.hpp"
 
 /* BenchmarkContext Implementation */
-BenchmarkContext::BenchmarkContext(int iterations, int warmupIterations)
+BenchmarkContext::BenchmarkContext(unsigned int iterations, unsigned int warmupIterations)
 : m_warmupTarget(warmupIterations), 
   m_warmupNum(0), 
   m_iterTarget(iterations), 
@@ -53,12 +53,12 @@ bool BenchmarkContext::next() {
 }
 
 
-std::chrono::nanoseconds BenchmarkContext::get_cpu_time() {
-    return std::chrono::nanoseconds(m_cpuTimer.elapsedNanoseconds());
+time_span<units::nanoseconds> BenchmarkContext::get_cpu_time() {
+    return m_cpuTimer.elapsedNanoseconds();
 }
 
-std::chrono::nanoseconds BenchmarkContext::get_real_time() {
-    return std::chrono::nanoseconds(m_realTimer.elapsedNanoseconds());
+time_span<units::nanoseconds> BenchmarkContext::get_real_time() {
+    return m_realTimer.elapsedNanoseconds();
 }
 
 BenchmarkState BenchmarkContext::state() {

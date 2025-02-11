@@ -4,6 +4,7 @@
 #include "benchy.hpp"
 
 #include <memory>
+#include <iostream>
 
 
 // Initialise Benchmark::s_registeredBenchmarks
@@ -22,13 +23,13 @@ public:
     : m_benchmarkInstance(instance), m_context(iterations, warmupIterations)
     { }
 
-    std::chrono::nanoseconds get_cpu_nanoseconds() {
+    time_span<units::nanoseconds> get_cpu_nanoseconds() {
         // Get a lock on the class data
         std::unique_lock<std::mutex> lock = data_lock();
         return m_context.get_cpu_time();
     }
 
-    std::chrono::nanoseconds get_real_nanoseconds() {
+    time_span<units::nanoseconds> get_real_nanoseconds() {
         std::unique_lock<std::mutex> lock = data_lock();
         return m_context.get_real_time();
     }
@@ -62,9 +63,9 @@ private:
 
 /* Benchmark Implementation */
 Benchmark::Benchmark(
-    int iterations, 
-    int warmupIterations, 
-    int runCount, 
+    unsigned int iterations, 
+    unsigned int warmupIterations, 
+    unsigned int runCount, 
     bool adjustIterations
 ) 
 : m_iterations(iterations), 
@@ -99,8 +100,8 @@ BenchmarkResults Benchmark::execute() {
     results.iterationCount = this->m_iterations;
     results.runCount = this->m_runCount;
     for (auto job : jobs) {
-        results.cpuData.add_point(job->get_cpu_nanoseconds().count());
-        results.realData.add_point(job->get_real_nanoseconds().count());
+        results.cpuData.add_point(job->get_cpu_nanoseconds().get());
+        results.realData.add_point(job->get_real_nanoseconds().get());
     }
 
     return results;
@@ -120,10 +121,10 @@ void Benchmark::check_time() {
 
         
         // Calculate average time per iter
-        double timePerIter = (double)result.get_cpu_time().count() / m_iterations;
+        double timePerIter = (double)result.get_cpu_time().get() / m_iterations;
 
         // Calculate required time
-        int requiredIter = std::chrono::duration_cast<std::chrono::nanoseconds>(BENCHY_MIN_TIME).count() / timePerIter;
+        unsigned long requiredIter = BENCHY_MIN_TIME.as<units::nanoseconds>().get() / timePerIter;
 
         if (requiredIter - m_iterations < BENCHY_MIN_CHANGE) {
             m_iterations = requiredIter;

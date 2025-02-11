@@ -1,6 +1,7 @@
 #ifndef _BENCHY_BENCHMARK_H
 #define _BENCHY_BENCHMARK_H
 
+#include "time.hpp"
 #include "benchmark_context.hpp"
 #include "series.hpp"
 
@@ -8,8 +9,8 @@
 #include <map>
 
 // TODO: Define in Benchy class
-#define BENCHY_MIN_TIME std::chrono::milliseconds(500)
-#define BENCHY_MAX_TIME std::chrono::seconds(1)
+#define BENCHY_MIN_TIME time_span<units::milliseconds>(500)
+#define BENCHY_MAX_TIME time_span<units::seconds>(1)
 #define BENCHY_MAX_ITERATIONS 50'000'000
 #define BENCHY_MIN_CHANGE 100
 
@@ -39,7 +40,7 @@ public:
     the total number of times to run the benchmark,
     and whether to adjust the number of iterations ran
     */
-    Benchmark(int iterations, int warmupIterations, int runCount, bool adjustIterations);
+    Benchmark(unsigned int iterations, unsigned int warmupIterations, unsigned int runCount, bool adjustIterations);
 
     virtual ~Benchmark() = default;
 
@@ -94,12 +95,10 @@ private:
     static std::map<const std::string, create_fn> &registeredBenchmarks();
 
 private:    
-    int m_iterations;
-    int m_warmupIterations;
-    int m_runCount;
+    unsigned int m_iterations;
+    unsigned int m_warmupIterations;
+    unsigned int m_runCount;
     bool m_adjustIterations;
-
-    // static std::map<const std::string, create_fn> s_registeredBenchmarks;
 };
 
 

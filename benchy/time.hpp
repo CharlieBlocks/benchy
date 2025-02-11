@@ -2,6 +2,8 @@
 #define _BENCHY_TIME_HPP_
 
 
+#define CALC_RATIO(ratio) ((double)ratio::Numerator / ratio::Denominator)
+#define CONVERT_VALUE(x, oldRatio, newRatio) x / CALC_RATIO(oldRatio) * CALC_RATIO(newRatio)
 
 template<int _Numerator, int _Denominator>
 struct ratio {
@@ -23,7 +25,7 @@ namespace units {
 }
 
 
-template<typename _Ratio, typename _Storage>
+template<typename _Ratio, typename _Storage = unsigned long>
 struct time_span {
 public:
     constexpr time_span() : value(0) { }
@@ -80,51 +82,69 @@ public:
     template<typename _OtherRatio>
     constexpr inline time_span operator +(const time_span<_OtherRatio, _Storage> &rhs) const noexcept {
         return time_span<_Ratio, _Storage>(
-            this->value + (rhs.value / (_OtherRatio::Numerator / _OtherRatio::Denominator) * (_Ratio::Numerator / _Ratio::Denominator))
+            this->value + CONVERT_VALUE(rhs.value, _OtherRatio, _Ratio)
         );
     }
     template<typename _OtherRatio>
     constexpr inline time_span operator -(const time_span<_OtherRatio, _Storage> &rhs) const noexcept {
         return time_span<_Ratio, _Storage>(
-            this->value - (rhs.value / (_OtherRatio::Numerator / _OtherRatio::Denominator) * (_Ratio::Numerator / _Ratio::Denominator))
+            this->value - CONVERT_VALUE(rhs.value, _OtherRatio, _Ratio)
         );
     }
     template<typename _OtherRatio>
     constexpr inline time_span operator *(const time_span<_OtherRatio, _Storage> &rhs) const noexcept {
         return time_span<_Ratio, _Storage>(
-            this->value * (rhs.value / (_OtherRatio::Numerator / _OtherRatio::Denominator) * (_Ratio::Numerator / _Ratio::Denominator))
+            this->value * CONVERT_VALUE(rhs.value, _OtherRatio, _Ratio)
         );
     }
     template<typename _OtherRatio>
     constexpr inline time_span operator /(const time_span<_OtherRatio, _Storage> &rhs) const noexcept {
         return time_span<_Ratio, _Storage>(
-            this->value / (rhs.value / (_OtherRatio::Numerator / _OtherRatio::Denominator) * (_Ratio::Numerator / _Ratio::Denominator))
+            this->value / CONVERT_VALUE(rhs.value, _OtherRatio, _Ratio)
         );
     }
 
     // (+-*/)= operators
     template<typename _OtherRatio>
     constexpr inline time_span &operator +=(const time_span<_OtherRatio, _Storage> &rhs) noexcept {
-        value += rhs.value / (_OtherRatio::Numerator / _OtherRatio::Denominator) * (_Ratio::Numerator / _Ratio::Denominator);
+        value += CONVERT_VALUE(rhs.value, _OtherRatio, _Ratio);
         return *this;
     }
     template<typename _OtherRatio>
     constexpr inline time_span &operator -=(const time_span<_OtherRatio, _Storage> &rhs) noexcept {
-        value -= rhs.value / (_OtherRatio::Numerator / _OtherRatio::Denominator) * (_Ratio::Numerator / _Ratio::Denominator);
+        value -= CONVERT_VALUE(rhs.value, _OtherRatio, _Ratio);
         return *this;
     }
     template<typename _OtherRatio>
     constexpr inline time_span &operator *=(const time_span<_OtherRatio, _Storage> &rhs) noexcept {
-        value *= rhs.value / (_OtherRatio::Numerator / _OtherRatio::Denominator) * (_Ratio::Numerator / _Ratio::Denominator);
+        value *= CONVERT_VALUE(rhs.value, _OtherRatio, _Ratio);
         return *this;
     }
     template<typename _OtherRatio>
     constexpr inline time_span &operator /=(const time_span<_OtherRatio, _Storage> &rhs) noexcept {
-        value /= rhs.value / (_OtherRatio::Numerator / _OtherRatio::Denominator) * (_Ratio::Numerator / _Ratio::Denominator);
+        value /= CONVERT_VALUE(rhs.value, _OtherRatio, _Ratio);
         return *this;
     }
 
-private:
+    // Comparison Operators
+    template<typename _OtherRatio>
+    constexpr inline bool operator >(const time_span<_OtherRatio, _Storage> &rhs) const noexcept {
+        return this->value > CONVERT_VALUE(rhs.value, _OtherRatio, _Ratio);
+    }
+    template<typename _OtherRatio>
+    constexpr inline bool operator <(const time_span<_OtherRatio, _Storage> &rhs) {
+        return this->value < CONVERT_VALUE(rhs.value, _OtherRatio, _Ratio);
+    }
+    template<typename _OtherRatio>
+    constexpr inline bool operator >=(const time_span<_OtherRatio, _Storage> &rhs) {
+        return this->value >= CONVERT_VALUE(rhs.value, _OtherRatio, _Ratio);
+    }
+    template<typename _OtherRatio>
+    constexpr inline bool operator <=(const time_span<_OtherRatio, _Storage> &rhs) {
+        return this->value <= CONVERT_VALUE(rhs.value, _OtherRatio, _Ratio);
+    }
+
+public:
     _Storage value;
 };
 
