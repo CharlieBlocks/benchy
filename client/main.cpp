@@ -1,4 +1,5 @@
 #include "benchy/benchy.hpp"
+#include "benchy/time.hpp"
 
 #include <iostream>
 
@@ -62,6 +63,13 @@ int main(void) {
     std::cout << "\tVariance: " << results.cpuData.variance() << std::endl;
     std::cout << "\tStd Deviation:" << results.cpuData.stdev() << std::endl;
 
+
+    time_span<units::seconds, int> sec(5);
+    time_span<units::milliseconds, int> mil(500);
+
+    std::cout << "Seconds: " << sec.get() << std::endl;
+    std::cout << "Milliseconds: " << mil.get() << std::endl;
+    std::cout << "Seconds as Microseconds: " << sec.as<units::microseconds>().get() << std::endl;
 
     return 0;
 }
