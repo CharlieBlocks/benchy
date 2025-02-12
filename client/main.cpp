@@ -25,7 +25,8 @@ public:
     void bench_fn(BenchmarkContext &context) override {
 
         while (context.next()) {
-            fibbonachi(20);
+            // std::this_thread::sleep_for(std::chrono::microseconds(500));
+            fibbonachi(10);
         }
 
     }
@@ -62,14 +63,9 @@ int main(void) {
     std::cout << "\tMean: " << results.cpuData.mean() << std::endl;
     std::cout << "\tVariance: " << results.cpuData.variance() << std::endl;
     std::cout << "\tStd Deviation:" << results.cpuData.stdev() << std::endl;
+    std::cout << "\n\t Average real time in Microseconds: " << time_span<units::nanoseconds, double>(results.realData.mean()).as<units::microseconds>().get() << "us" << std::endl;
+    std::cout << "\n\t Average CPU time in Microseconds: " << time_span<units::nanoseconds, double>(results.cpuData.mean()).as<units::microseconds>().get() << "us" << std::endl;
 
-
-    time_span<units::seconds, int> sec(5);
-    time_span<units::milliseconds, int> mil(500);
-
-    std::cout << "Seconds: " << sec.get() << std::endl;
-    std::cout << "Milliseconds: " << mil.get() << std::endl;
-    std::cout << "Seconds as Microseconds: " << sec.as<units::microseconds>().get() << std::endl;
 
     return 0;
 }

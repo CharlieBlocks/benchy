@@ -1,9 +1,11 @@
 #ifndef _BENCHY_TIME_HPP_
 #define _BENCHY_TIME_HPP_
 
+#include <iostream>
+
 
 #define CALC_RATIO(ratio) ((double)ratio::Numerator / ratio::Denominator)
-#define CONVERT_VALUE(x, oldRatio, newRatio) x / CALC_RATIO(oldRatio) * CALC_RATIO(newRatio)
+#define CONVERT_VALUE(x, oldRatio, newRatio) x * CALC_RATIO(oldRatio) / CALC_RATIO(newRatio)
 
 template<int _Numerator, int _Denominator>
 struct ratio {

@@ -100,8 +100,8 @@ BenchmarkResults Benchmark::execute() {
     results.iterationCount = this->m_iterations;
     results.runCount = this->m_runCount;
     for (auto job : jobs) {
-        results.cpuData.add_point(job->get_cpu_nanoseconds().get());
-        results.realData.add_point(job->get_real_nanoseconds().get());
+        results.cpuData.add_point((double)job->get_cpu_nanoseconds().get() / m_iterations);
+        results.realData.add_point((double)job->get_real_nanoseconds().get() / m_iterations);
     }
 
     return results;
