@@ -8,6 +8,8 @@
 
 #include "benchmark.hpp"
 
+#include "defines.hpp"
+
 /* Defines */
 // #define BENCHY_MAX_ITERATIONS 50'000'000
 // #define BENCHY_MIN_TIME_MS 500 // Minimum of 500 milliseconds
@@ -187,10 +189,10 @@ private:
 
 
 /* Defines */
-#define BENCHMARK(name, content) \
-class Bench_##name : public Benchmark { \
-public: \
-    void BenchFn(BenchmarkContext &context) override {\
-        content \
-    }\
-};
+// #define BENCHMARK(name, content) \
+// class Bench_##name : public Benchmark { \
+// public: \
+//     void BenchFn(BenchmarkContext &context) override {\
+//         content \
+//     }\
+// };
