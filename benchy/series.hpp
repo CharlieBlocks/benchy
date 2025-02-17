@@ -9,6 +9,12 @@ public:
     DataSeries();
     DataSeries(int reserveSize);
 
+    // Copy Constructor
+    DataSeries(const DataSeries &other);
+
+    // Move Constructor
+    DataSeries(DataSeries &&other);
+
     void add_point(_Storage point);
 
     inline int size() { return static_cast<int>(m_dataPoints.size());}

@@ -14,6 +14,18 @@ DataSeries<_Storage>::DataSeries(int reserveSize)
 }
 
 template<typename _Storage>
+DataSeries<_Storage>::DataSeries(const DataSeries &other) 
+: m_isSorted(other.m_isSorted) {
+    m_dataPoints = other.m_dataPoints; // Copy data poitns
+}
+
+template<typename _Storage>
+DataSeries<_Storage>::DataSeries(const DataSeries &&other)
+: m_isSorted(other.m_isSorted) {
+    m_dataPoints = std::move(other.m_dataPoints);
+}
+
+template<typename _Storage>
 void DataSeries<_Storage>::add_point(_Storage point) {
     m_dataPoints.push_back(point);
     m_isSorted = false;
