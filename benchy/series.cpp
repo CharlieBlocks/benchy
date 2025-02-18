@@ -20,7 +20,7 @@ DataSeries<_Storage>::DataSeries(const DataSeries &other)
 }
 
 template<typename _Storage>
-DataSeries<_Storage>::DataSeries(const DataSeries &&other)
+DataSeries<_Storage>::DataSeries(DataSeries &&other)
 : m_isSorted(other.m_isSorted) {
     m_dataPoints = std::move(other.m_dataPoints);
 }

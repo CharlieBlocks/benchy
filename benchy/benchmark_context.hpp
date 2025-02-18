@@ -34,6 +34,20 @@ public:
 
 
     /*
+    Copy and Move Constructors. They will copy the targets, states and timers
+    */
+    BenchmarkContext(const BenchmarkContext &other);
+    BenchmarkContext(const BenchmarkContext &&other);
+
+
+    /* 
+    Copy and Move assignment operators. Do the same thing
+    */
+    BenchmarkContext &operator =(const BenchmarkContext &other); 
+    BenchmarkContext &operator =(const BenchmarkContext &&other);
+
+
+    /*
     Steps to the next iteration. This should be used in a while loop.
 
     while (context.next()) { ... }

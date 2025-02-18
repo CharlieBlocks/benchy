@@ -9,6 +9,35 @@ BenchmarkContext::BenchmarkContext(unsigned int iterations, unsigned int warmupI
   m_currentState(BenchmarkState::Warmup)
 { }
 
+BenchmarkContext::BenchmarkContext(const BenchmarkContext &other)
+: m_warmupTarget(other.m_warmupTarget),
+    m_warmupNum(other.m_warmupNum),
+    m_iterTarget(other.m_iterTarget),
+    m_iterNum(other.m_iterNum),
+    m_currentState(other.m_currentState),
+    m_cpuTimer(other.m_cpuTimer),
+    m_realTimer(other.m_realTimer)
+{ }
+BenchmarkContext::BenchmarkContext(const BenchmarkContext &&other)
+: m_warmupTarget(other.m_warmupTarget),
+    m_warmupNum(other.m_warmupNum),
+    m_iterTarget(other.m_iterTarget),
+    m_iterNum(other.m_iterNum),
+    m_currentState(other.m_currentState),
+    m_cpuTimer(other.m_cpuTimer),
+    m_realTimer(other.m_realTimer)
+{ }
+
+BenchmarkContext &BenchmarkContext::operator =(const BenchmarkContext &other) {
+    *this = other; // Invoke copy constructor
+    return *this;
+}
+BenchmarkContext &BenchmarkContext::operator =(const BenchmarkContext &&other) {
+    *this = other; // Invoke copy constructor
+    return *this;
+}
+
+
 bool BenchmarkContext::next() {
     // Switch based on current state
     switch (m_currentState) {
