@@ -66,20 +66,20 @@ struct __Benchmark {
     virtual BenchmarkContext Execute(_InstanceType *instance, int variationIdx) = 0;
 };
 
-struct __BenchmarkData {
+struct BenchmarkMetadata {
     unsigned int _warmupCount;
     unsigned int _iterationCount;
     unsigned int _runCount;
     bool _disableAutoFit;
 
     // Constructors
-    inline constexpr __BenchmarkData()
+    inline constexpr BenchmarkMetadata()
     : _warmupCount(0),
         _iterationCount(1),
         _runCount(1),
         _disableAutoFit(false)
     { }
-    inline constexpr __BenchmarkData(int warmupCount, int iterationCount, int runCount, bool disableAutoFit) 
+    inline constexpr BenchmarkMetadata(int warmupCount, int iterationCount, int runCount, bool disableAutoFit) 
     : _warmupCount(warmupCount),
         _iterationCount(iterationCount),
         _runCount(runCount),
@@ -87,7 +87,7 @@ struct __BenchmarkData {
     { }
 
     // Copy Constructor
-    inline constexpr __BenchmarkData(const __BenchmarkData &other)
+    inline constexpr BenchmarkMetadata(const BenchmarkMetadata &other)
     : _warmupCount(other._warmupCount),
         _iterationCount(other._iterationCount),
         _runCount(other._runCount),
@@ -95,7 +95,7 @@ struct __BenchmarkData {
     { }
 
     // Move Constructor
-    inline constexpr __BenchmarkData(const __BenchmarkData &&other)
+    inline constexpr BenchmarkMetadata(const BenchmarkMetadata &&other)
     : _warmupCount(other._warmupCount),
         _iterationCount(other._iterationCount),
         _runCount(other._runCount),
@@ -104,7 +104,7 @@ struct __BenchmarkData {
 
 
     // Copy Operator
-    inline __BenchmarkData &operator =(const __BenchmarkData &other) {
+    inline BenchmarkMetadata &operator =(const BenchmarkMetadata &other) {
         this->_warmupCount = other._warmupCount;
         this->_iterationCount = other._iterationCount;
         this->_runCount = other._runCount;
@@ -114,7 +114,7 @@ struct __BenchmarkData {
     }
 
     // Move Operator
-    inline __BenchmarkData &operator =(const __BenchmarkData &&other) {
+    inline BenchmarkMetadata &operator =(const BenchmarkMetadata &&other) {
         this->_warmupCount = other._warmupCount;
         this->_iterationCount = other._iterationCount;
         this->_runCount = other._runCount;
@@ -127,14 +127,14 @@ struct __BenchmarkData {
 template<typename _InstanceType, typename ...Args>
 struct ClassBenchmark : 
     public __Benchmark<_InstanceType>, 
-    public __BenchmarkData 
+    public BenchmarkMetadata 
 {
 public:
     ClassBenchmark(
         std::string name,
         void (_InstanceType::*benchFunc)(BenchmarkContext &, Args...)
     ) 
-    : __BenchmarkData(),
+    : BenchmarkMetadata(),
         _name(name),
         _benchFunc(benchFunc),
         _argumentProviders({})
@@ -145,7 +145,7 @@ public:
 
     // Move Constructor
     ClassBenchmark(const ClassBenchmark &&other) 
-    : __BenchmarkData(std::move(other.__BenchmarkData)),
+    : BenchmarkMetadata(std::move(other.BenchmarkMetadata)),
         _name(std::move(other._name)),
         _benchFunc(std::move(other._benchFunc)),
         _argumentProviders(std::move(other._argumentProviders))
@@ -156,7 +156,7 @@ public:
 
     // Move Assignment Operator
     inline ClassBenchmark &operator =(ClassBenchmark &&other) {
-        __BenchmarkData::operator=(other);
+        BenchmarkMetadata::operator=(other);
 
         this->_name = std::move(other._name);
         this->_benchFunc = other._benchFunc;
@@ -216,9 +216,14 @@ public:
         int subIdx = 0;
         idx = calculate_variation_idx(idx, &subIdx);
 
-        return create_function_definition(
-            _argumentProviders[idx]->GetVariation(subIdx)
-        );
+        if (idx != -1) {
+            auto args = _argumentProviders[idx]->GetVariation(subIdx);
+            return create_function_definition(
+                args
+            );
+        } else {
+            return create_function_definition();
+        }
     }
 
     BenchmarkContext Execute(_InstanceType *instance, int varIdx) override {
@@ -295,6 +300,14 @@ private:
         return ss.str();
     }
 
+    std::string create_function_definition() {
+        std::stringstream ss;
+        ss << _name << "(BenchmarkContext &context)";
+        
+        return ss.str();
+    }
+
+
 private:
     std::string _name;
 
@@ -309,14 +322,14 @@ private:
 template<typename ...Args>
 struct FunctionBenchmark :
     public __Benchmark<void>,
-    public __BenchmarkData
+    public BenchmarkMetadata
 {
 public:
     FunctionBenchmark(
         std::string name,
         void (*benchFunc)(BenchmarkContext &, Args...)
     )
-    : __BenchmarkData({ 0, 1, 5, false }),
+    : BenchmarkMetadata({ 0, 1, 5, false }),
         _name(name),
         _benchFunc(benchFunc),
         _argumentProviders()
@@ -327,7 +340,7 @@ public:
 
     // Move Constructor
     FunctionBenchmark(FunctionBenchmark &&other) 
-    : __BenchmarkData(std::move(other.__BenchmarkData)),
+    : BenchmarkMetadata(std::move(other.BenchmarkMetadata)),
         _name(std::move(other._name)),
         _benchFunc(std::move(other._benchFunc)),
         _argumentProviders(std::move(other._argumentProviders))
@@ -338,7 +351,7 @@ public:
 
     // Move Assignment Operator
     inline FunctionBenchmark &operator =(FunctionBenchmark &&other) {
-        __BenchmarkData::operator=(other);
+        BenchmarkMetadata::operator=(other);
 
         this->_name = std::move(other._name);
         this->_benchFunc = other._benchFunc;
@@ -396,10 +409,14 @@ public:
         int subIdx = 0;
         idx = calculate_variation_idx(idx, &subIdx);
 
-        auto args = _argumentProviders[idx]->GetVariation(subIdx);
-        return create_function_definition(
-            args
-        );
+        if (idx != -1) {
+            auto args = _argumentProviders[idx]->GetVariation(subIdx);
+            return create_function_definition(
+                args
+            );
+        } else {
+            return create_function_definition();
+        }
     }
 
     BenchmarkContext Execute(void *, int varIdx) override {
@@ -474,6 +491,13 @@ private:
         return ss.str();
     }
 
+    std::string create_function_definition() {
+        std::stringstream ss;
+        ss << _name << "(BenchmarkContext &context)";
+        
+        return ss.str();
+    }
+
 private:
     std::string _name;
 
@@ -482,6 +506,24 @@ private:
     std::vector<std::unique_ptr<ArgumentProvider<Args...>>> _argumentProviders;
 };
 
+
+
+class MicroBenchmarks {
+public:
+
+    template<typename ...Args>
+    static std::shared_ptr<FunctionBenchmark<Args...>> RegisterBenchmark(
+        std::string name,
+        void (*benchFunc)(BenchmarkContext &, Args...)
+    ) {
+        std::shared_ptr<FunctionBenchmark<Args...>> ptr = std::make_shared<FunctionBenchmark<Args...>>(name, benchFunc);
+        get_benchmark_list().push_back(ptr);
+
+        return ptr;
+    }
+
+    static std::vector<std::shared_ptr<__Benchmark<void>>> &get_benchmark_list();
+};
 
 // template<typename ...Args>
 // struct FunctionBenchmark : public __Benchmark<void> {

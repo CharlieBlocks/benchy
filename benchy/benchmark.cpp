@@ -7,6 +7,14 @@
 #include <iostream>
 
 
+
+std::vector<std::shared_ptr<__Benchmark<void>>> &MicroBenchmarks::get_benchmark_list() {
+    static std::vector<std::shared_ptr<__Benchmark<void>>> _microBenchmarkList;
+    return _microBenchmarkList;
+}
+
+
+
 // Initialise Benchmark::s_registeredBenchmarks
 // Because this is a "zero-initialisation" variable it will be
 // initialised before any other classes attempt to register
