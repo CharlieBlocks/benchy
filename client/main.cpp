@@ -63,13 +63,17 @@ MICROBENCHMARK(test_func)
 
 
 int main(void) {
-    auto bench = MicroBenchmarks::get_benchmark_list()[0];
-    std::cout << bench->GetVariationCount() << std::endl;
+    Benchy benchy(4);
 
-    BenchmarkContext res = bench->Execute(nullptr, 0);
+    benchy.ExecuteMicroBenchmarks();
 
-    std::cout << bench->GetVariationDefinition(0) << std::endl;
-    std::cout << "CPU Time: " << res.get_cpu_time().as<units::microseconds>().get() << "ms" << std::endl;
+    // auto bench = MicroBenchmarks::get_benchmark_list()[0];
+    // std::cout << bench->GetVariationCount() << std::endl;
+
+    // BenchmarkContext res = bench->Execute(nullptr, 0);
+
+    // std::cout << bench->GetVariationDefinition(0) << std::endl;
+    // std::cout << "CPU Time: " << res.get_cpu_time().as<units::microseconds>().get() << "ms" << std::endl;
 
     return 0;
 }

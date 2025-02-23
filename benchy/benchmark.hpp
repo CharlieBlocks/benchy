@@ -61,50 +61,50 @@ struct BenchmarkResults {
 
 template<typename _InstanceType>
 struct __Benchmark {
-    virtual int GetVariationCount() = 0;
-    virtual std::string GetVariationDefinition(int idx) = 0;
-    virtual BenchmarkContext Execute(_InstanceType *instance, int variationIdx) = 0;
-};
-
-struct BenchmarkMetadata {
+public:
     unsigned int _warmupCount;
     unsigned int _iterationCount;
     unsigned int _runCount;
     bool _disableAutoFit;
 
+    /* Virtual Functions */
+    virtual int GetVariationCount() = 0;
+    virtual std::string GetVariationDefinition(int idx) = 0;
+    virtual BenchmarkContext Execute(_InstanceType *instance, int variationIdx) = 0;
+
     // Constructors
-    inline constexpr BenchmarkMetadata()
-    : _warmupCount(0),
-        _iterationCount(1),
-        _runCount(1),
-        _disableAutoFit(false)
-    { }
-    inline constexpr BenchmarkMetadata(int warmupCount, int iterationCount, int runCount, bool disableAutoFit) 
-    : _warmupCount(warmupCount),
-        _iterationCount(iterationCount),
-        _runCount(runCount),
-        _disableAutoFit(disableAutoFit)
-    { }
+    // inline constexpr __Benchmark()
+    // : _warmupCount(0),
+    //     _iterationCount(1),
+    //     _runCount(1),
+    //     _disableAutoFit(false)
+    // { }
+    // inline constexpr __Benchmark(int warmupCount, int iterationCount, int runCount, bool disableAutoFit) 
+    // : _warmupCount(warmupCount),
+    //     _iterationCount(iterationCount),
+    //     _runCount(runCount),
+    //     _disableAutoFit(disableAutoFit)
+    // { }
 
     // Copy Constructor
-    inline constexpr BenchmarkMetadata(const BenchmarkMetadata &other)
-    : _warmupCount(other._warmupCount),
-        _iterationCount(other._iterationCount),
-        _runCount(other._runCount),
-        _disableAutoFit(other._disableAutoFit)
-    { }
+    // inline constexpr __Benchmark(const __Benchmark &other)
+    // : _warmupCount(other._warmupCount),
+    //     _iterationCount(other._iterationCount),
+    //     _runCount(other._runCount),
+    //     _disableAutoFit(other._disableAutoFit)
+    // { }
 
     // Move Constructor
-    inline constexpr BenchmarkMetadata(const BenchmarkMetadata &&other)
-    : _warmupCount(other._warmupCount),
-        _iterationCount(other._iterationCount),
-        _runCount(other._runCount),
-        _disableAutoFit(other._disableAutoFit)
-    { }
+    // inline constexpr __Benchmark(const __Benchmark &&other)
+    // : _warmupCount(other._warmupCount),
+    //     _iterationCount(other._iterationCount),
+    //     _runCount(other._runCount),
+    //     _disableAutoFit(other._disableAutoFit)
+    // { }
 
 
     // Copy Operator
-    inline BenchmarkMetadata &operator =(const BenchmarkMetadata &other) {
+    inline __Benchmark &operator =(const __Benchmark &other) {
         this->_warmupCount = other._warmupCount;
         this->_iterationCount = other._iterationCount;
         this->_runCount = other._runCount;
@@ -114,7 +114,7 @@ struct BenchmarkMetadata {
     }
 
     // Move Operator
-    inline BenchmarkMetadata &operator =(const BenchmarkMetadata &&other) {
+    inline __Benchmark &operator =(const __Benchmark &&other) {
         this->_warmupCount = other._warmupCount;
         this->_iterationCount = other._iterationCount;
         this->_runCount = other._runCount;
@@ -122,41 +122,49 @@ struct BenchmarkMetadata {
 
         return *this;
     }
+
 };
+
 
 template<typename _InstanceType, typename ...Args>
 struct ClassBenchmark : 
-    public __Benchmark<_InstanceType>, 
-    public BenchmarkMetadata 
-{
+    public __Benchmark<_InstanceType> {
 public:
     ClassBenchmark(
         std::string name,
         void (_InstanceType::*benchFunc)(BenchmarkContext &, Args...)
     ) 
-    : BenchmarkMetadata(),
-        _name(name),
+    : _name(name),
         _benchFunc(benchFunc),
         _argumentProviders({})
-    { }
+    { 
+        this->_iterationCount = 1;
+        this->_warmupCount = 0;
+        this->_runCount = 1;
+        this->_disableAutoFit = false;
+    }
 
     // Deleted Copy constructor
     ClassBenchmark(const ClassBenchmark &other) = delete;
 
     // Move Constructor
     ClassBenchmark(const ClassBenchmark &&other) 
-    : BenchmarkMetadata(std::move(other.BenchmarkMetadata)),
-        _name(std::move(other._name)),
+    : _name(std::move(other._name)),
         _benchFunc(std::move(other._benchFunc)),
         _argumentProviders(std::move(other._argumentProviders))
-    { }
+    { 
+        this->_iterationCount = other._iterationCount;
+        this->_warmupCount = other._warmupCount;
+        this->_runCount = other._runCount;
+        this->_disableAutoFit = other._disableAutoFit;
+    }
 
     // Deleted Copy Assignment Operator
     inline ClassBenchmark &operator =(const ClassBenchmark &other) = delete;
 
     // Move Assignment Operator
     inline ClassBenchmark &operator =(ClassBenchmark &&other) {
-        BenchmarkMetadata::operator=(other);
+        __Benchmark<_InstanceType>::operator=(other);
 
         this->_name = std::move(other._name);
         this->_benchFunc = other._benchFunc;
@@ -179,22 +187,22 @@ public:
     }
 
     decltype(auto) Iterations(int iter) {
-        _iterationCount = iter;
+        this->_iterationCount = iter;
         return this;
     }
 
     decltype(auto) Warmups(int iter) {
-        _warmupCount = iter;
+        this->_warmupCount = iter;
         return this;
     }
 
     decltype(auto) RunCount(int runs) {
-        _runCount = runs;
+        this->_runCount = runs;
         return this;
     }
 
     decltype(auto) DisableAutoFit() {
-        _disableAutoFit = true;
+        this->_disableAutoFit = true;
         return this;
     }
 
@@ -228,7 +236,7 @@ public:
 
     BenchmarkContext Execute(_InstanceType *instance, int varIdx) override {
       
-        BenchmarkContext context(_iterationCount, _warmupCount);
+        BenchmarkContext context(this->_iterationCount, this->_warmupCount);
 
         if constexpr (sizeof...(Args) == 0) {
             // Run Function
@@ -321,37 +329,43 @@ private:
 
 template<typename ...Args>
 struct FunctionBenchmark :
-    public __Benchmark<void>,
-    public BenchmarkMetadata
-{
+    public __Benchmark<void> {
 public:
     FunctionBenchmark(
         std::string name,
         void (*benchFunc)(BenchmarkContext &, Args...)
     )
-    : BenchmarkMetadata({ 0, 1, 5, false }),
-        _name(name),
+    : _name(name),
         _benchFunc(benchFunc),
         _argumentProviders()
-    { }
+    {
+        _iterationCount = 1;
+        _warmupCount = 0;
+        _runCount = 1;
+        _disableAutoFit = false;
+    }
 
     // Deleted Copy Constructor
     FunctionBenchmark(const FunctionBenchmark &other) = delete;
 
     // Move Constructor
     FunctionBenchmark(FunctionBenchmark &&other) 
-    : BenchmarkMetadata(std::move(other.BenchmarkMetadata)),
-        _name(std::move(other._name)),
+    : _name(std::move(other._name)),
         _benchFunc(std::move(other._benchFunc)),
         _argumentProviders(std::move(other._argumentProviders))
-    { }
+    {
+        _iterationCount = other._iterationCount;
+        _warmupCount = other._warmupCount;
+        _runCount = other._runCount;
+        _disableAutoFit = false;
+    }
 
     // Deleted Copy Assignment Operator
     inline FunctionBenchmark &operator =(const FunctionBenchmark &other) = delete;
 
     // Move Assignment Operator
     inline FunctionBenchmark &operator =(FunctionBenchmark &&other) {
-        BenchmarkMetadata::operator=(other);
+        __Benchmark::operator=(other);
 
         this->_name = std::move(other._name);
         this->_benchFunc = other._benchFunc;
@@ -374,22 +388,22 @@ public:
     }
 
     decltype(auto) Iterations(int iter) {
-        _iterationCount = iter;
+        this->_iterationCount = iter;
         return this;
     }
 
     decltype(auto) Warmups(int iter) {
-        _warmupCount = iter;
+        this->_warmupCount = iter;
         return this;
     }
 
     decltype(auto) RunCount(int runs) {
-        _runCount = runs;
+        this->_runCount = runs;
         return this;
     }
 
     decltype(auto) DisableAutoFit() {
-        _disableAutoFit = true;
+        this->_disableAutoFit = true;
         return this;
     }
 
@@ -420,7 +434,7 @@ public:
     }
 
     BenchmarkContext Execute(void *, int varIdx) override {
-        BenchmarkContext context(_iterationCount, _warmupCount);
+        BenchmarkContext context(this->_iterationCount, this->_warmupCount);
 
         if constexpr (sizeof...(Args) == 0)
             execute_run(context);
@@ -525,119 +539,5 @@ public:
     static std::vector<std::shared_ptr<__Benchmark<void>>> &get_benchmark_list();
 };
 
-// template<typename ...Args>
-// struct FunctionBenchmark : public __Benchmark<void> {
-
-// }
-
-
-// class BenchmarkExecutor {
-// public:
-
-//     virtual ~BenchmarkExecutor() = default;
-
-//     virtual void execute() = 0;
-
-//     // virtual void export(Exporter &exporter) = 0;
-// };
-
-
-// class ComponentBenchmark {
-
-// };
-
-
-
-// template<typename ...Args>
-// class MicroBenchmark : public Benchmark {
-// public:
-//     MicroBenchmark();
-
-//     void RegisterBenchmark() {
-
-//     }
-// };
-
-
-
-
-
-class Benchmark {
-public:
-    /*
-    Constructor for the Benchmark type.
-    It takes the number of iterations to perform per run,
-    the number of warmup iterations to perform before the actual benchmark runs,
-    the total number of times to run the benchmark,
-    and whether to adjust the number of iterations ran
-    */
-    Benchmark(unsigned int iterations, unsigned int warmupIterations, unsigned int runCount, bool adjustIterations);
-
-    virtual ~Benchmark() = default;
-
-
-    /*
-    The actual benchmarking function to be run.
-    This is expected to wrap the test code that you want to time
-    in the context.
-    */
-    virtual void bench_fn(BenchmarkContext &context) = 0;
-
-
-    /*
-    Executes the benchmark, including the fit time for the requested number of 
-    runs. The results are returned in a BenchmarkResults structure
-    */
-    BenchmarkResults execute();
-
-public:
-    using create_fn = std::unique_ptr<Benchmark>(*)();
-
-    static bool register_benchmark(const std::string name, create_fn createFn);
-
-
-    // TEMPORARY
-    static std::unique_ptr<Benchmark> get_benchmark(const std::string name) {
-        return registeredBenchmarks()[name]();
-    }
-
-private:
-    /*
-    Runs the benchmark for one run and checks what the returned time was,
-    if the time is insignificant then the number of iterations will be increased
-    until the time is expected to provide reliable results.
-    */
-    void check_time();
-
-
-    /* 
-    A helper function used by the check_time function. This runs the benchmark
-    for a single instance and returns the resultant context
-    */
-    BenchmarkContext run_one();
-
-
-    /*
-    Returns the static variable containing the registered benchmarks. Unfortunatly we can not
-    use a static member variable as we cannot guarantee that it will be initialised before the first
-    call. Instead we use a function with a static variable inside it, this makes use of Construct On First Use
-    to ensure the variable is created before an insertion is made.
-    */
-    static std::map<const std::string, create_fn> &registeredBenchmarks();
-
-private:    
-    unsigned int m_iterations;
-    unsigned int m_warmupIterations;
-    unsigned int m_runCount;
-    bool m_adjustIterations;
-};
-
-
-
-template<typename T>
-class BenchmarkRegisterHelper {
-protected:
-    static bool s_wasRegistered;
-};
 
 #endif // _BENCHY_BENCHMARK_H

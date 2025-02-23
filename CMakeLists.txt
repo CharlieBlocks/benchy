@@ -19,7 +19,10 @@ add_library (
     "${CMAKE_CURRENT_SOURCE_DIR}/benchy/dispatcher.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/benchy/dispatcher.hpp"
 
+    "${CMAKE_CURRENT_SOURCE_DIR}/benchy/time.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/benchy/time_fitter.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/benchy/timers.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/benchy/argument_providers.hpp"
 
     "${CMAKE_CURRENT_SOURCE_DIR}/benchy/series.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/benchy/series.cpp"
@@ -29,10 +32,6 @@ add_library (
 
     "${CMAKE_CURRENT_SOURCE_DIR}/benchy/benchmark.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/benchy/benchmark.cpp"
-
-    "${CMAKE_CURRENT_SOURCE_DIR}/benchy/time.hpp"
-
-    "${CMAKE_CURRENT_SOURCE_DIR}/benchy/argument_providers.hpp"
 )
 
 target_include_directories (benchy_lib PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
