@@ -4,6 +4,7 @@
 #include "benchmark_context.hpp"
 #include "defines.hpp"
 #include "dispatcher.hpp"
+#include "exporter.hpp"
 
 
 class Benchy {
@@ -14,6 +15,7 @@ public:
 
     // Executor Functions
     void ExecuteMicroBenchmarks();
+    void ExportTo(std::unique_ptr<Exporter> &exporter);
     
 
 

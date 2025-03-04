@@ -14,8 +14,11 @@ Done - Finished running all iterations
 enum class BenchmarkState : unsigned char {
     Warmup,
     Running,
-    Done
+    Done,
+    Fail
 };
+
+std::string BenchmarkStateToString(BenchmarkState state);
 
 
 /*

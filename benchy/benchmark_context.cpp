@@ -1,5 +1,16 @@
 #include "benchmark_context.hpp"
 
+
+std::string BenchmarkStateToString(BenchmarkState state) {
+    switch (state) {
+        case BenchmarkState::Warmup: return "Warmup";
+        case BenchmarkState::Running: return "Running";
+        case BenchmarkState::Done: return "Done";
+        case BenchmarkState::Fail: return "Fail";
+    }
+}
+
+
 /* BenchmarkContext Implementation */
 BenchmarkContext::BenchmarkContext(unsigned int iterations, unsigned int warmupIterations)
 : m_warmupTarget(warmupIterations), 

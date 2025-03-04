@@ -55,8 +55,10 @@ void Benchy::ExecuteMicroBenchmarks() {
     for (auto b : MicroBenchmarks::get_benchmark_list()) {
         // Loop over variations        
         for (int v = 0; v < b->GetVariationCount(); ++v) {
-            TimeFitter<void> fitter(b, nullptr, v);
-            fitter.Fit();
+            if (!b->_disableAutoFit) {
+                TimeFitter<void> fitter(b, nullptr, v);
+                fitter.Fit();
+            }
 
             // Then run jobs
             std::vector<std::shared_ptr<BenchmarkExecutorJob>> jobs;
@@ -76,14 +78,17 @@ void Benchy::ExecuteMicroBenchmarks() {
             
             // Create and push back result
             BenchmarkResults result(b->_runCount);
-            result.iterationCount = b->_iterationCount;
-            result.runCount       = b->_runCount;
+            result.benchmarkName    = b->_name;
+            result.iterationCount   = b->_iterationCount;
+            result.runCount         = b->_runCount;
             for (auto job : jobs) {
                 BenchmarkContext context = job->get_context();
                 result.cpuData.add_point((double)context.get_cpu_time().get() / b->_iterationCount);
                 result.realData.add_point((double)context.get_real_time().get() / b->_iterationCount);
+                result.state = context.state();
             }
 
+            
             _benchmarkResults.push_back(std::move(result));
         }
 
@@ -95,4 +100,11 @@ void Benchy::ExecuteMicroBenchmarks() {
     // 3. Fit time and Execute
     // 4. Save results to a ComponentResults
 
+}
+
+
+void Benchy::ExportTo(std::unique_ptr<Exporter> &exporter) {
+    for (auto result : _benchmarkResults)
+        exporter->AddResult(result);
+    exporter->Export();
 }

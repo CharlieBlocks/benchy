@@ -58,7 +58,7 @@ void test_func(BenchmarkContext &context) {
 
 MICROBENCHMARK(test_func)
 ->Warmups(50)
-->Iterations(100'000)
+->Iterations(10'000'000)
 ->RunCount(5);
 
 
@@ -67,13 +67,8 @@ int main(void) {
 
     benchy.ExecuteMicroBenchmarks();
 
-    // auto bench = MicroBenchmarks::get_benchmark_list()[0];
-    // std::cout << bench->GetVariationCount() << std::endl;
-
-    // BenchmarkContext res = bench->Execute(nullptr, 0);
-
-    // std::cout << bench->GetVariationDefinition(0) << std::endl;
-    // std::cout << "CPU Time: " << res.get_cpu_time().as<units::microseconds>().get() << "ms" << std::endl;
+    std::unique_ptr<Exporter> exporter = std::make_unique<StdoutTableExporter>();
+    benchy.ExportTo(exporter);
 
     return 0;
 }

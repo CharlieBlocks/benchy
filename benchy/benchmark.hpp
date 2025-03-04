@@ -35,7 +35,9 @@ struct BenchmarkResults {
 
     // Copy Constructor
     BenchmarkResults(const BenchmarkResults &other)
-    : cpuData(other.cpuData),
+    : benchmarkName(other.benchmarkName),
+        state(other.state),
+        cpuData(other.cpuData),
         realData(other.realData),
         iterationCount(other.iterationCount),
         runCount(other.runCount)
@@ -45,11 +47,17 @@ struct BenchmarkResults {
 
     // Move Constructor
     BenchmarkResults(const BenchmarkResults &&other)
-    : cpuData(std::move(other.cpuData)),
+    : benchmarkName(std::move(other.benchmarkName)),
+        state(other.state),
+        cpuData(std::move(other.cpuData)),
         realData(std::move(other.realData)),
         iterationCount(other.iterationCount),
         runCount(other.runCount)
     {}
+
+
+    std::string benchmarkName;
+    BenchmarkState state;
 
     DataSeries<double> cpuData;
     DataSeries<double> realData;
@@ -62,6 +70,7 @@ struct BenchmarkResults {
 template<typename _InstanceType>
 struct __Benchmark {
 public:
+    std::string _name;
     unsigned int _warmupCount;
     unsigned int _iterationCount;
     unsigned int _runCount;
@@ -134,10 +143,10 @@ public:
         std::string name,
         void (_InstanceType::*benchFunc)(BenchmarkContext &, Args...)
     ) 
-    : _name(name),
-        _benchFunc(benchFunc),
+    : _benchFunc(benchFunc),
         _argumentProviders({})
     { 
+        this->_name = name;
         this->_iterationCount = 1;
         this->_warmupCount = 0;
         this->_runCount = 1;
@@ -149,10 +158,10 @@ public:
 
     // Move Constructor
     ClassBenchmark(const ClassBenchmark &&other) 
-    : _name(std::move(other._name)),
-        _benchFunc(std::move(other._benchFunc)),
+    : _benchFunc(std::move(other._benchFunc)),
         _argumentProviders(std::move(other._argumentProviders))
     { 
+        this->_name = std::move(this->_name);
         this->_iterationCount = other._iterationCount;
         this->_warmupCount = other._warmupCount;
         this->_runCount = other._runCount;
@@ -270,14 +279,14 @@ private:
         (instance->*_benchFunc)(context);
 
         if (context.state() != BenchmarkState::Done)
-            std::cout << "[WARNING]: Benchmark " << _name << " did not complete all iterations. Was the benchmark malformed?" << std::endl;
+            std::cout << "[WARNING]: Benchmark " << this->_name << " did not complete all iterations. Was the benchmark malformed?" << std::endl;
     }
 
     inline void execute_run(_InstanceType *instance, BenchmarkContext &context, std::tuple<Args &&...> &args) {
         call_function(instance, context, args, std::make_integer_sequence<int, sizeof...(Args)>());
 
         if (context.state() != BenchmarkState::Done)
-            std::cout << "[WARNING]: Benchmark " << _name << " did not complete all iterations. Was the benchmark malformed?" << std::endl;
+            std::cout << "[WARNING]: Benchmark " << this->_name << " did not complete all iterations. Was the benchmark malformed?" << std::endl;
     }
 
     template<int ...S>
@@ -299,7 +308,7 @@ private:
 
     std::string create_function_definition(std::tuple<Args &&...> &args) {
         std::stringstream ss;
-        ss << _name << "(";
+        ss << this->_name << "(";
 
         build_arg_list(ss, args);
 
@@ -310,15 +319,13 @@ private:
 
     std::string create_function_definition() {
         std::stringstream ss;
-        ss << _name << "(BenchmarkContext &context)";
+        ss << this->_name << "(BenchmarkContext &context)";
         
         return ss.str();
     }
 
 
 private:
-    std::string _name;
-
     void (_InstanceType::*_benchFunc)(BenchmarkContext &, Args...);
 
     std::vector<std::unique_ptr<ArgumentProvider<Args...>>> _argumentProviders;
@@ -335,10 +342,10 @@ public:
         std::string name,
         void (*benchFunc)(BenchmarkContext &, Args...)
     )
-    : _name(name),
-        _benchFunc(benchFunc),
+    : _benchFunc(benchFunc),
         _argumentProviders()
     {
+        _name = name;
         _iterationCount = 1;
         _warmupCount = 0;
         _runCount = 1;
@@ -350,10 +357,10 @@ public:
 
     // Move Constructor
     FunctionBenchmark(FunctionBenchmark &&other) 
-    : _name(std::move(other._name)),
-        _benchFunc(std::move(other._benchFunc)),
+    : _benchFunc(std::move(other._benchFunc)),
         _argumentProviders(std::move(other._argumentProviders))
     {
+        _name = std::move(_name);
         _iterationCount = other._iterationCount;
         _warmupCount = other._warmupCount;
         _runCount = other._runCount;
@@ -389,6 +396,7 @@ public:
 
     decltype(auto) Iterations(int iter) {
         this->_iterationCount = iter;
+        this->_disableAutoFit = true;
         return this;
     }
 
@@ -513,8 +521,6 @@ private:
     }
 
 private:
-    std::string _name;
-
     void (*_benchFunc)(BenchmarkContext &, Args...);
 
     std::vector<std::unique_ptr<ArgumentProvider<Args...>>> _argumentProviders;
