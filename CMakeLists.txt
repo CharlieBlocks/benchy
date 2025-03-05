@@ -35,6 +35,8 @@ add_library (
 
     "${CMAKE_CURRENT_SOURCE_DIR}/benchy/exporter.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/benchy/exporter.cpp"
+
+    "${CMAKE_CURRENT_SOURCE_DIR}/benchy/entry.cpp"
 )
 
 target_include_directories (benchy_lib PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")

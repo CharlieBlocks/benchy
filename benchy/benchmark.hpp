@@ -215,6 +215,11 @@ public:
         return this;
     }
 
+    decltype(auto) Name(std::string name) {
+        this->_name = name;
+        return this;
+    }
+
 
 
     // __Benchmark<_InstanceType> implementation
@@ -412,6 +417,11 @@ public:
 
     decltype(auto) DisableAutoFit() {
         this->_disableAutoFit = true;
+        return this;
+    }
+
+    decltype(auto) Name(std::string name) {
+        this->_name = name;
         return this;
     }
 
