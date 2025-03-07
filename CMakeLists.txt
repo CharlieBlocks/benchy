@@ -39,7 +39,7 @@ add_library (
     "${CMAKE_CURRENT_SOURCE_DIR}/benchy/entry.cpp"
 )
 
-target_include_directories (benchy_lib PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories (benchy_lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
 
 
