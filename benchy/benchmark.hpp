@@ -42,7 +42,7 @@ struct BenchmarkResults {
         iterationCount(other.iterationCount),
         runCount(other.runCount)
     {
-        std::cout << "Warning. BenchmarkResults copy constructor called!" << std::endl;
+        // std::cout << "Warning. BenchmarkResults copy constructor called!" << std::endl;
     }
 
     // Move Constructor
@@ -135,209 +135,6 @@ public:
 };
 
 
-template<typename _InstanceType, typename ...Args>
-struct ClassBenchmark : 
-    public __Benchmark<_InstanceType> {
-public:
-    ClassBenchmark(
-        std::string name,
-        void (_InstanceType::*benchFunc)(BenchmarkContext &, Args...)
-    ) 
-    : _benchFunc(benchFunc),
-        _argumentProviders({})
-    { 
-        this->_name = name;
-        this->_iterationCount = 1;
-        this->_warmupCount = 0;
-        this->_runCount = 1;
-        this->_disableAutoFit = false;
-    }
-
-    // Deleted Copy constructor
-    ClassBenchmark(const ClassBenchmark &other) = delete;
-
-    // Move Constructor
-    ClassBenchmark(const ClassBenchmark &&other) 
-    : _benchFunc(std::move(other._benchFunc)),
-        _argumentProviders(std::move(other._argumentProviders))
-    { 
-        this->_name = std::move(this->_name);
-        this->_iterationCount = other._iterationCount;
-        this->_warmupCount = other._warmupCount;
-        this->_runCount = other._runCount;
-        this->_disableAutoFit = other._disableAutoFit;
-    }
-
-    // Deleted Copy Assignment Operator
-    inline ClassBenchmark &operator =(const ClassBenchmark &other) = delete;
-
-    // Move Assignment Operator
-    inline ClassBenchmark &operator =(ClassBenchmark &&other) {
-        __Benchmark<_InstanceType>::operator=(other);
-
-        this->_name = std::move(other._name);
-        this->_benchFunc = other._benchFunc;
-        this->_argumentProviders = std::move(other._argumentProviders);
-
-        return *this;
-    }
-
-
-    /* Setters */
-    decltype(auto) Params(ArgumentContainer<Args...> arguments) {
-        _argumentProviders.push_back(std::make_unique(arguments));
-        return this;
-    }
-
-    template<int N>
-    decltype(auto) Params(ArgumentMatrix<N, Args...> arguments) {
-        _argumentProviders.push_back(std::make_unique(arguments));
-        return this;
-    }
-
-    decltype(auto) Iterations(int iter) {
-        this->_iterationCount = iter;
-        return this;
-    }
-
-    decltype(auto) Warmups(int iter) {
-        this->_warmupCount = iter;
-        return this;
-    }
-
-    decltype(auto) RunCount(int runs) {
-        this->_runCount = runs;
-        return this;
-    }
-
-    decltype(auto) DisableAutoFit() {
-        this->_disableAutoFit = true;
-        return this;
-    }
-
-    decltype(auto) Name(std::string name) {
-        this->_name = name;
-        return this;
-    }
-
-
-
-    // __Benchmark<_InstanceType> implementation
-    inline int GetVariationCount() override { 
-        if constexpr (sizeof...(Args) == 0)
-            return 1;
-
-        int sum = 0;
-        for (size_t i = 0; i < _argumentProviders.size(); ++i) {
-            sum += _argumentProviders[i]->VariationCount();
-        }
-        
-        return sum;
-    }
-    inline std::string GetVariationDefinition(int idx) override {
-        int subIdx = 0;
-        idx = calculate_variation_idx(idx, &subIdx);
-
-        if (idx != -1) {
-            auto args = _argumentProviders[idx]->GetVariation(subIdx);
-            return create_function_definition(
-                args
-            );
-        } else {
-            return create_function_definition();
-        }
-    }
-
-    BenchmarkContext Execute(_InstanceType *instance, int varIdx) override {
-      
-        BenchmarkContext context(this->_iterationCount, this->_warmupCount);
-
-        if constexpr (sizeof...(Args) == 0) {
-            // Run Function
-            execute_run(instance, context);
-        }
-        else {
-            int subIdx = 0;
-            varIdx = execute_run(varIdx, &subIdx);
-            
-            execute_run(instance, context, _argumentProviders[varIdx]->GetVariation(subIdx));
-        }
-
-        return context;
-    }
-
-private:
-    inline int calculate_variation_idx(int varIdx, int *subVariationIdx) {
-        int currSum = 0;
-        for (int i = 0; i < _argumentProviders.size(); ++i) {
-            *subVariationIdx = currSum - varIdx;
-            currSum += i;
-            if (varIdx < currSum)
-                return i;
-        }
-
-        return -1;
-    }
-
-    /* Benchmark Execution */
-    inline void execute_run(_InstanceType *instance, BenchmarkContext &context) {
-        (instance->*_benchFunc)(context);
-
-        if (context.state() != BenchmarkState::Done)
-            std::cout << "[WARNING]: Benchmark " << this->_name << " did not complete all iterations. Was the benchmark malformed?" << std::endl;
-    }
-
-    inline void execute_run(_InstanceType *instance, BenchmarkContext &context, std::tuple<Args &&...> &args) {
-        call_function(instance, context, args, std::make_integer_sequence<int, sizeof...(Args)>());
-
-        if (context.state() != BenchmarkState::Done)
-            std::cout << "[WARNING]: Benchmark " << this->_name << " did not complete all iterations. Was the benchmark malformed?" << std::endl;
-    }
-
-    template<int ...S>
-    inline void call_function(_InstanceType *instance, BenchmarkContext &context, std::tuple<Args &&...> &args, std::integer_sequence<int, S...>) {
-        (instance->*_benchFunc)(context, std::forward(std::get<S>(args))...);
-    }
-
-
-    /* Building Function Definition*/
-    template<int N, int n>
-    void build_arg_list(std::stringstream &stream, std::tuple<Args &&...> &args) {
-        stream << _TYPE_NAME(decltype(std::get<n>(args))) << std::to_string(std::get<n>(args));
-        if constexpr (n == N - 1)
-            return;
-        
-        stream << ", ";
-        build_arg_list<N, n + 1>(stream, args);
-    }
-
-    std::string create_function_definition(std::tuple<Args &&...> &args) {
-        std::stringstream ss;
-        ss << this->_name << "(";
-
-        build_arg_list(ss, args);
-
-        ss << ")";
-
-        return ss.str();
-    }
-
-    std::string create_function_definition() {
-        std::stringstream ss;
-        ss << this->_name << "(BenchmarkContext &context)";
-        
-        return ss.str();
-    }
-
-
-private:
-    void (_InstanceType::*_benchFunc)(BenchmarkContext &, Args...);
-
-    std::vector<std::unique_ptr<ArgumentProvider<Args...>>> _argumentProviders;
-};
-
-
-
 
 template<typename ...Args>
 struct FunctionBenchmark :
@@ -389,13 +186,13 @@ public:
 
     /* Setters */
     decltype(auto) Params(ArgumentContainer<Args...> arguments) {
-        _argumentProviders.push_back(std::make_unique(arguments));
+        _argumentProviders.push_back(std::make_unique<ArgumentContainer<Args...>>(arguments));
         return this;
     }
 
     template<int N>
     decltype(auto) Params(ArgumentMatrix<N, Args...> arguments) {
-        _argumentProviders.push_back(std::make_unique(arguments));
+        _argumentProviders.push_back(std::make_unique<ArgumentMatrix<N, Args...>>(arguments));
         return this;
     }
 
@@ -458,9 +255,10 @@ public:
             execute_run(context);
         else {
             int subIdx = 0;
-            varIdx = execute_run(varIdx, &subIdx);
+            varIdx = calculate_variation_idx(varIdx, &subIdx);
             
-            execute_run(context, _argumentProviders[varIdx]->GetVariation(subIdx));
+            auto args = _argumentProviders[varIdx]->GetVariation(subIdx);
+            execute_run(context, args);
         }
 
         return context;
@@ -471,7 +269,7 @@ private:
         int currSum = 0;
         for (int i = 0; i < _argumentProviders.size(); ++i) {
             *subVariationIdx = currSum - varIdx;
-            currSum += i;
+            currSum += _argumentProviders[i]->VariationCount();
             if (varIdx < currSum)
                 return i;
         }
@@ -487,7 +285,7 @@ private:
             std::cout << "[WARNING]: Benchmark " << _name << " did not complete all iterations. Was the benchmark malformed?" << std::endl;
     }
 
-    inline void execute_run(BenchmarkContext &context, std::tuple<Args &&...> &args) {
+    inline void execute_run(BenchmarkContext &context, std::tuple<Args &...> &args) {
         call_function(context, args, std::make_integer_sequence<int, sizeof...(Args)>());
 
         if (context.state() != BenchmarkState::Done)
@@ -495,23 +293,24 @@ private:
     }
 
     template<int ...S>
-    inline void call_function(BenchmarkContext &context, std::tuple<Args &&...> &args, std::integer_sequence<int, S...>) {
-        _benchFunc(context, std::forward(std::get<S>(args))...);
+    inline void call_function(BenchmarkContext &context, std::tuple<Args &...> &args, std::integer_sequence<int, S...>) {
+        _benchFunc(context, std::get<S>(args)...);
     }
 
 
     /* Building Function Definition*/
     template<int N = sizeof...(Args), int n = 0>
-    void build_arg_list(std::stringstream &stream, std::tuple<Args &&...> &args) {
+    void build_arg_list(std::stringstream &stream, std::tuple<Args &...> &args) {
         stream << _TYPE_NAME(decltype(std::get<n>(args))) << std::to_string(std::get<n>(args));
         if constexpr (n == N - 1)
             return;
-        
-        stream << ", ";
-        build_arg_list<N, n + 1>(stream, args);
+        else {
+            stream << ", ";
+            build_arg_list<N, n + 1>(stream, args);
+        }
     }
 
-    std::string create_function_definition(std::tuple<Args &&...> &args) {
+    std::string create_function_definition(std::tuple<Args &...> &args) {
         std::stringstream ss;
         ss << _name << "(BenchmarkContext &context";
         

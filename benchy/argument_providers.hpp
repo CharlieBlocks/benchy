@@ -38,6 +38,17 @@ struct variation_collector {
 
 };
 
+// Make Reference-Tuple
+template<typename ...T, size_t... I>
+auto __make_rtuple(std::tuple<T...> &t, std::index_sequence<I...>) -> std::tuple<T&...> {
+    return std::tie(std::get<I>(t)...);
+}
+
+template<typename ...T>
+std::tuple<T &...> make_rtuple(std::tuple<T...> &t) {
+    return __make_rtuple(t, std::make_index_sequence<sizeof...(T)>{});
+}
+
 
 template<typename ...Args>
 struct ArgumentProvider {
@@ -46,7 +57,7 @@ public:
 
     virtual int VariationCount() = 0;
 
-    virtual std::tuple<Args &&...> &&GetVariation(int idx) = 0;
+    virtual std::tuple<Args &...> GetVariation(int idx) = 0;
 };
 
 
@@ -54,8 +65,8 @@ template<typename ...Args>
 class ArgumentContainer : public ArgumentProvider<Args...> {
 public:
     // Standard Constructor
-    ArgumentContainer(Args &&... args)
-    : _arguments(std::forward_as_tuple(args...))
+    ArgumentContainer(Args... args)
+    : _arguments(args...)
     { }
 
     // Copy Constructor
@@ -74,14 +85,13 @@ public:
         return 1;
     }
 
-    std::tuple<Args &&...> &&GetVariation(int idx) override {
-        auto copy = _arguments;
-        return std::move(copy);
+    std::tuple<Args &...> GetVariation(int idx) override {
+        return make_rtuple(_arguments);
     }
 
 
 private:
-    std::tuple<Args &&...> _arguments;
+    std::tuple<Args...> _arguments;
 };
 
 

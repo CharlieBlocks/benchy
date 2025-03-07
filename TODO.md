@@ -2,8 +2,9 @@
 - [x] Add custom time division implementation
 - [ ] Add defines
 - [ ] Support component benchmarks as well as microbenchmarks
-- [ ] Add output exporters
+- [x] Add output exporters
 - [ ] Restructure to have main function
+- [ ] Add counting CPU cycles
 
 ## Microbenchmark Requirements
 - Low profile
@@ -49,4 +50,33 @@ public:
 };
 REGISTER_COMPONENT(BM_Component)
 
+```
+
+
+## Expected Standard Output
+```
+[Done] Namespace:BM_MicroBench - CPU Time: x  Real Time: y, Variance: +-z, Iterations: 50,000,000
+
+
+State | Name | CPU Time (ns) | Real Time (ms) | Variance (%) | Iterations
+------|------|---------------|----------------|--------------|-----------
+      | Bench1 | x           | y              | +-z          | 50,000,000
+      | Bench2 | a           | b              | +-t          | 50,000,000
+
+[Done] Namespace::BM_MicroBench
+    |- Iterations: 50,000,000
+    |- CPU Time  :  x (ns/us) +- stdev
+    |- Real Time : y (ns/us) +- stdev
+
+[Fail] Namespace::BM_MicroBench
+    |- Reason: Exception
+
+Namespace::ComponentBench
+    |- [Done] CustomBench
+    |   |- Iterations: 50,000,000
+    |   |- CPU Time  : x(ns/us) +- stdev 
+    |   |- Real Time : y(ns/us) +- stdev
+    |
+    |- [Fail] CustonBench2
+        |- Reason: Exception
 ```
